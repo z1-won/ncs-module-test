@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ncs-review"
-version = "0.1.0"
+version = "0.2.0"
 description = "NCS 학습모듈 F02 검수 엔진 — 차례·개요·필요지식·위치 규칙 검사 (hwp/hwpx)"
 readme = "README.md"
 requires-python = ">=3.10"

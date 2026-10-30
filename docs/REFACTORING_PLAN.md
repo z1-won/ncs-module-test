@@ -35,8 +35,10 @@ ncs-review/
 │   ├─ ncs_knowledge/          # 필요지식 ①~⑧                                   (그대로)
 │   ├─ ncs_position/           # 위치 ①~⑤                                       (그대로)
 │   └─ ncs_review/             # [신규] 서비스 진입점
-│        ├─ areas.py           #   영역 정의: 이름·필수 입력·prepare/evaluate/save 연결
-│        ├─ orchestrator.py    #   run_all(): 문서 1회 읽기 → 4영역 독립 실행(부분 실패 허용) → 종합 요약
+│        ├─ config.py          #   ReviewConfig: 섹션·영역별 임계값 한 곳
+│        ├─ extract.py         #   ExtractedDocuments: 모든 추출물을 지연·캐시로 1회
+│        ├─ areas.py           #   영역 정의: 추출물 → 패키지 ReviewContext 어댑터, evaluate/save 연결
+│        ├─ orchestrator.py    #   run_all(): 문서 1회 읽기 → 추출 1회 → 4영역 독립 실행(부분 실패 허용) → 종합 요약
 │        ├─ reporting.py       #   결과/<코드>_<실행>/ 아래 영역별 파일 + 00_종합요약.json + ZIP
 │        └─ cli.py             #   ncs-review 명령 (python -m ncs_review)
 ├─ tools/
@@ -56,7 +58,7 @@ ncs-review/
 
 ## 2. 단계
 
-### 1단계 — 패키지화 (이 저장소의 첫 커밋들)
+### 1단계 — 패키지화 — **완료 (v0.1.0)**
 
 | # | 작업 | 산출물 | 확인 방법 |
 |---|---|---|---|
@@ -76,13 +78,14 @@ ncs-review/
 - 종합 판정은 `ncs_core.reporting.overall_verdict`와 같은 규칙(부적합 > 판단불가 > 적합). 실패한 영역이 있으면 종합은 `판단불가`로 내리고 `failed` 목록을 적는다.
 - 결과 폴더는 `결과/<모듈코드>_<실행별>/` 하나. 안에 기존 영역별 파일(이름 규칙 불변)과 `<코드>_00_종합요약.json`, `<코드>_검수결과.zip`. 기존 영역별 ZIP 소비자가 있으면 그대로 쓸 수 있도록 영역별 파일 이름은 바꾸지 않는다.
 
-### 2단계 — 통합 파이프라인 (판정 불변, 구조 변경)
+### 2단계 — 통합 파이프라인 (판정 불변, 구조 변경) — **완료 (v0.2.0)**
 
-- 단일 `ReviewContext`: `manuscript, plan, module_code, config, toc, overview(개요 전체), body, presence, eval_tables, units, plan_block(정의·목표·학습명·내용명·요소·수행준거), labels, position(분류·위치 표·서식 표)`. 지금 다섯 패키지의 `ReviewContext`·`prepare_review`를 하나의 `extract/`로 합친다.
-- 규칙 모듈은 손대지 않고 `registry`만 통합 컨텍스트에서 필드를 꺼내 넘긴다. 규칙 함수 시그니처가 이미 "순수 함수(dict 입력 → 행 목록)"라 가능하다.
-- `config`를 하나로: `front_section`, `body_section`, 영역별 임계값(선수학습 5, 핵심 용어 10, 목표 유사도 0.8/0.85, figtab 일치율 0.5 …)을 YAML/dataclass 한 곳에서.
-- 교차 참조를 코드로: 개요 ⑤ 비고의 "차례 ③ 참조", 개요 ⑤·필요지식 ④의 기호 글꼴 중복 보고를 한 컨텍스트에서 정리한다.
-- 회귀 기준: 1단계에서 저장한 골든 JSON과 2단계 출력이 같아야 한다(`region_path` 등 섹션 표기 포함).
+- `ncs_review/extract.py` `ExtractedDocuments`: 네 영역이 쓰는 모든 추출물(toc, toc_overview, plan_toc, presence, body, eval_tables, overview, plan_info, structure, units, plan_goals, table_paragraphs, labels, 분류·위치 표·서식 표·계획서 모듈명)을 **지연·캐시 속성**으로 한 번만 만든다. 차례·필요지식이 함께 쓰던 `parse_toc`/`parse_body`, 개요·필요지식이 함께 쓰던 개요 파서가 각 1회 호출된다(`tests/test_extract.py`).
+- 각 패키지의 `ReviewContext`는 `ncs_review/areas.py`의 어댑터가 추출물로 조립하고, 기존 `evaluate_review`를 그대로 호출한다. 규칙 모듈·파서는 한 줄도 바꾸지 않았다. 패키지별 `prepare_review`는 단독 사용을 위해 남겨 둔다.
+- 추출 실패는 그 추출물을 쓰는 영역에만 전파된다(본문 섹션이 없으면 차례·필요지식만 실패, 개요는 정상).
+- `ncs_review/config.py` `ReviewConfig`가 섹션 번호와 영역별 임계값(차례 휴리스틱 5개, 개요 3개, 필요지식 6개)을 한 곳에서 갖고 각 패키지 `CheckConfig`를 만든다. 기본값은 기존과 같다.
+- 회귀 기준: 실제 원고 LM1203020201_24v3 의 골든(`tests/golden/`, 158행·지적 66건)과 통합 후 출력이 같다. `engine_version`만 비교에서 뺀다.
+- 미착수: 교차 참조 정리(개요 ⑤ 비고의 "차례 ③ 참조", 기호 글꼴 중복 보고). 규칙 변경이 필요하므로 판정 변경 커밋으로 따로 한다.
 
 ### 3단계 — 서비스 (별도 저장소 또는 `apps/`)
 

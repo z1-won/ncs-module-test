@@ -13,6 +13,7 @@ from ncs_core.text import UNDECIDED, VERDICTS
 
 from . import __version__ as ENGINE_VERSION
 from .areas import AREAS, Area, run_area
+from .extract import ExtractedDocuments
 from .config import DEFAULT_CONFIG, ReviewConfig
 
 OK, FAILED, SKIPPED = "ok", "failed", "skipped"
@@ -92,6 +93,7 @@ def run_documents(
     """이미 읽은 Document 로 실행한다(서비스 워커가 파일 저장소에서 읽어 넘길 때)."""
     code = resolve_module_code(manuscript.path, module_code)
     run = RunResult(code, manuscript, plan, config)
+    extracted = ExtractedDocuments(manuscript, plan, code, config)  # 추출은 지연·캐시: 영역들이 공유한다
     for key in config.areas:
         area = areas.get(key)
         if area is None:
@@ -100,7 +102,7 @@ def run_documents(
             run.outcomes[key] = AreaOutcome(area, SKIPPED, error="개발계획서가 없어 이 영역은 실행하지 않음")
             continue
         try:
-            run.outcomes[key] = AreaOutcome(area, OK, result=run_area(area, manuscript, plan, code, config))
+            run.outcomes[key] = AreaOutcome(area, OK, result=run_area(area, extracted))
         except ValueError as error:  # 양식·섹션·입력 문제: 메시지가 곧 사용자 안내
             run.outcomes[key] = AreaOutcome(area, FAILED, error=str(error))
         except Exception as error:  # noqa: BLE001 — 한 영역의 버그가 다른 영역 결과를 막지 않게 한다

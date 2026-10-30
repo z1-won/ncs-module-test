@@ -37,7 +37,7 @@ def test_failed_area_does_not_block_others(sample_pair):
         raise RuntimeError("일부러 낸 오류")
 
     broken = dict(AREAS)
-    broken["toc"] = Area("toc", "차례", "F02-차례-", False, AREAS["toc"].make_config, boom, AREAS["toc"].evaluate, AREAS["toc"].save)
+    broken["toc"] = Area("toc", "차례", "F02-차례-", False, boom, AREAS["toc"].evaluate, AREAS["toc"].save)
     run = run_documents(docs["m"], docs["p"], areas=broken)
     assert run.outcomes["toc"].status == FAILED
     assert "내부 오류" in run.outcomes["toc"].error and run.outcomes["toc"].traceback

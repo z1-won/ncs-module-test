@@ -24,6 +24,7 @@ def normalize(value):
 def golden_of(run) -> dict:
     summary = run.summary()
     summary["inputs"] = {k: (Path(v).name if v else None) for k, v in summary["inputs"].items()}
+    summary.pop("engine_version", None)  # 버전 번호는 판정이 아니다
     areas = {}
     for key, outcome in run.outcomes.items():
         entry = {"status": outcome.status, "error": outcome.error}

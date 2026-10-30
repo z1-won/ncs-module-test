@@ -1,7 +1,6 @@
 {
  "summary": {
   "module_code": "LM1203020201_24v3",
-  "engine_version": "0.1.0",
   "inputs": {
    "manuscript": "LM1203020201_24v3_light.hwpx",
    "plan": "개발계획서_12030202.hwp"
