@@ -29,7 +29,7 @@ CMD ["--help"]
 FROM base AS test
 USER root
 COPY tests ./tests
-COPY legacy ./legacy
+
 RUN pip install pytest
 USER reviewer
 CMD ["python", "-m", "pytest", "-q"]

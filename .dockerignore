@@ -9,7 +9,6 @@ dist
 .venv
 결과
 data
-notebooks
 docs
 *.hwp
 *.hwpx

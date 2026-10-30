@@ -42,10 +42,7 @@ ncs-review/
 │        ├─ reporting.py       #   결과/<코드>_<실행>/ 아래 영역별 파일 + 00_종합요약.json + ZIP
 │        └─ cli.py             #   ncs-review 명령 (python -m ncs_review)
 ├─ tools/
-│   ├─ extract_from_notebooks.py   # 노트북 → src 복원 + sha256 검증 (이행 근거, 재실행 가능)
-│   └─ build_notebook.py           # (후속) src → Colab 클라이언트 노트북이 아니라 wheel 설치형으로 전환
-├─ notebooks/
-│   └─ F02_검수_클라이언트.ipynb   # Colab용 얇은 클라이언트 1개: pip install → run_all → 다운로드
+│   └─ make_golden.py              # 실제 원고 쌍의 결과를 골든 JSON으로 저장
 ├─ tests/                      # pytest: 순수 함수, 합성 hwpx 로더, 오케스트레이터 스모크, 추출 무결성
 ├─ docs/REFACTORING_PLAN.md    # 이 문서
 ├─ Dockerfile · docker-compose.yml · .dockerignore
@@ -69,7 +66,7 @@ ncs-review/
 | 1-5 | 테스트 | `tests/` | `pytest` 통과, CI |
 | 1-6 | Docker | `Dockerfile`, `docker-compose.yml` | `docker build` 후 `docker run … --help` |
 | 1-7 | git/GitHub | 단계별 커밋, CI 워크플로 | 원격 푸시 |
-| 1-8 | Colab 클라이언트 노트북 1개 | `notebooks/` | 노트북이 소스를 품지 않고 설치만 함 |
+| 1-8 | ~~Colab 클라이언트 노트북~~ | — | 당장 쓰지 않아 삭제. 노트북 원본·추출 도구는 첫 커밋 `5f4c150`에 남아 있음 |
 
 오케스트레이터의 규칙:
 
@@ -108,4 +105,4 @@ ncs-review/
 
 - 판정 정책 변경(임계값, X/△ 기준). 변경은 테스트와 함께 별도 커밋으로.
 - 규칙 모듈 재작성. 1·2단계 모두 `rules/` 내용은 그대로.
-- Colab 노트북에 소스를 다시 심는 것(`build_notebook.py` 방식). 노트북은 설치형 클라이언트로만 남긴다.
+- Colab 노트북 유지. 노트북 원본과 추출 도구는 git 역사(`5f4c150`)에만 남긴다.
