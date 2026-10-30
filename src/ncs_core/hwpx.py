@@ -96,11 +96,12 @@ def _cell_runs(cell: ET.Element, own_paragraphs: list[ET.Element], char_props: d
 
 
 def parse_section(root: ET.Element, section_index: int, styles: tuple[dict, dict] | None):
-    """(문단 텍스트 목록, 표 목록, 그림 목록)을 돌려준다.
+    """(문단 텍스트 목록, 표 목록, 그림 목록, 표 안 문단 인덱스 집합)을 돌려준다.
 
     표: {'section', 'paragraph', 'rows', 'cols', 'cells': {(r,c): 텍스트},
          'styles': {(r,c): {'fill', 'runs': [{'text','font','bold'}]}} (styles 없으면 None)}
     그림: (문단 인덱스, 원본 그림 이름)
+    표 안 문단: 조상 가운데 <hp:tbl> 이 있는 문단의 인덱스(중첩 깊이 무관). 본문 규칙이 표 안 번호·출처를 제외할 때 쓴다.
     """
     parents = {child: parent for parent in root.iter() for child in parent}
     paragraphs = list(root.iter(HP + "p"))
@@ -156,12 +157,20 @@ def parse_section(root: ET.Element, section_index: int, styles: tuple[dict, dict
                 "styles": cell_styles if styles is not None else None,
             }
         )
-    return [para_text(p) for p in paragraphs], tables, images
+    table_paragraphs = set()
+    for index, paragraph in enumerate(paragraphs):
+        current = parents.get(paragraph)
+        while current is not None:
+            if current.tag == HP + "tbl":
+                table_paragraphs.add(index)
+                break
+            current = parents.get(current)
+    return [para_text(p) for p in paragraphs], tables, images, table_paragraphs
 
 
 def load_hwpx(path):
-    """(섹션별 문단, 표, 그림) — 그림은 (섹션, 문단, 이름)."""
-    sections, tables, images = [], [], []
+    """(섹션별 문단, 표, 그림, 섹션별 표 안 문단 집합) — 그림은 (섹션, 문단, 이름)."""
+    sections, tables, images, table_paragraphs = [], [], [], []
     with zipfile.ZipFile(path) as archive:
         try:
             styles = header_styles(archive)
@@ -169,8 +178,9 @@ def load_hwpx(path):
             styles = None
         for index, name in enumerate(section_names(archive)):
             root = ET.fromstring(archive.read(name))
-            paragraphs, section_tables, section_images = parse_section(root, index, styles)
+            paragraphs, section_tables, section_images, in_tables = parse_section(root, index, styles)
             sections.append(paragraphs)
             tables.extend(section_tables)
             images.extend((index, paragraph, image) for paragraph, image in section_images)
-    return sections, tables, images
+            table_paragraphs.append(in_tables)
+    return sections, tables, images, table_paragraphs

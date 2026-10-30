@@ -13,7 +13,7 @@ from typing import Any
 from ncs_core import Document, Table
 from ncs_knowledge.figtab import _flatten, collect_labels
 from ncs_knowledge.plan import parse_plan_goals
-from ncs_knowledge.structure import cell_paragraphs, unit_regions
+from ncs_knowledge.structure import unit_regions
 from ncs_overview.parsers import parse_overview as parse_overview_full
 from ncs_overview.parsers import parse_plan as parse_plan_block
 from ncs_position.parsers import find_styled_position_table, parse_classification, parse_plan_module_name, parse_position
@@ -124,9 +124,7 @@ class ExtractedDocuments:
 
     @cached_property
     def table_paragraphs(self) -> set[int] | None:
-        if self.manuscript.format != "hwpx":
-            return None
-        return cell_paragraphs(self.manuscript.path, self.config.body_section)
+        return self.manuscript.section_table_paragraphs(self.config.body_section)
 
     @cached_property
     def labels(self) -> dict[str, Any]:
