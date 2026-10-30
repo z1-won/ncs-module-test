@@ -5,7 +5,7 @@ NCS 학습모듈 원고(`.hwp` / `.hwpx`)를 F02 검수 확인서 기준으로 �
 추가 설치 패키지 없이 Python 3.10 이상에서 동작한다.
 
 ```bash
-pip install -e .
+pip install git+https://github.com/z1-won/ncs-module-test.git   # 또는 소스에서: pip install -e .
 ncs-review 원고_LM1203020201_24v3.hwpx 개발계획서.hwp --out 결과
 ```
 
