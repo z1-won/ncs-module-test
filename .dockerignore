@@ -1,0 +1,15 @@
+.git
+.github
+__pycache__
+*.pyc
+*.egg-info
+build
+dist
+.pytest_cache
+.venv
+결과
+data
+notebooks
+docs
+*.hwp
+*.hwpx

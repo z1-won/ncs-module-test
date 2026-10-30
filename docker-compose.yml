@@ -1,0 +1,21 @@
+services:
+  # 일회성 검수: docker compose run --rm review /data/원고_LM....hwpx /data/개발계획서.hwp
+  review:
+    build:
+      context: .
+      target: base
+    image: ncs-review:local
+    volumes:
+      - ./data:/data:ro
+      - ./결과:/results
+    command: ["--help"]
+    # 기본 결과 폴더를 /results 로 두기 위해 실행 시 --out 을 생략해도 되도록 작업 디렉터리를 맞춘다
+    working_dir: /results
+
+  # 테스트: docker compose run --rm test
+  test:
+    build:
+      context: .
+      target: test
+    image: ncs-review:test
+    profiles: ["test"]
