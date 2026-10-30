@@ -9,5 +9,5 @@ dist/
 data/
 *.hwp
 *.hwpx
-!tests/fixtures/*.hwpx
+# 실제 원고·계획서(tests/fixtures/*.hwp*)는 저작물이라 기본으로 올리지 않는다. 올리려면 이 줄 아래에 !tests/fixtures/*.hwpx 등을 추가.
 .ipynb_checkpoints/
